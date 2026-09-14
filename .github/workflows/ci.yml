@@ -18,7 +18,7 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install ${{ runner.os == 'Linux' && '--with-deps' || '' }} chromium
       - name: FFmpeg on macOS
         if: runner.os == 'macOS'
         run: brew install ffmpeg
