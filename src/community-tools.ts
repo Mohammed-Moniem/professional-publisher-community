@@ -10,7 +10,7 @@ import {
 import { Decks, deckSchema, slideSchema } from "./decks.js";
 import { Scheduler, scheduleSchema } from "./scheduler.js";
 import type { Publisher } from "./publisher.js";
-import type { LinkedIn } from "./linkedin.js";
+import { API_VERSION, type LinkedIn } from "./linkedin.js";
 import { publicError, authorUrn, connectionId } from "./model.js";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -96,7 +96,7 @@ export function registerCommunity(
       arch: process.arch,
       dataDirectory: store.root,
       worker: await store.read("settings", "worker"),
-      apiVersion: process.env.LINKEDIN_VERSION || "202608",
+      apiVersion: API_VERSION,
       notice:
         "Live permissions require check_capabilities. Use the CLI doctor to check renderer and ffprobe.",
     }),

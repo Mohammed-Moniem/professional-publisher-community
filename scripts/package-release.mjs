@@ -23,15 +23,17 @@ await mkdir(join(stage,'runtime'),{recursive:true});
 // Use official Node builds: a Homebrew executable can depend on external dylibs.
 const nodeFile=`node-${process.version}-${process.platform==='win32'?'win':process.platform}-${process.arch}.${process.platform==='win32'?'zip':'tar.gz'}`;
 const base=`https://nodejs.org/dist/${process.version}/`;
-const checksResponse=await fetch(base+'SHASUMS256.txt');if(!checksResponse.ok)throw Error('Node checksums unavailable');
+const checksResponse=await fetch(base+'SHASUMS256.txt',{signal:AbortSignal.timeout(60000)});if(!checksResponse.ok)throw Error('Node checksums unavailable');
 const checks=await checksResponse.text();const expected=checks.split('\n').find(l=>l.trim().endsWith(' '+nodeFile))?.split(/\s+/)[0];if(!expected)throw Error('Official Node archive not listed');
-const nodeResponse=await fetch(base+nodeFile);if(!nodeResponse.ok)throw Error('Node download failed');const bytes=Buffer.from(await nodeResponse.arrayBuffer());if(createHash('sha256').update(bytes).digest('hex')!==expected)throw Error('Node checksum mismatch');
+const nodeResponse=await fetch(base+nodeFile,{signal:AbortSignal.timeout(120000)});if(!nodeResponse.ok)throw Error('Node download failed');const bytes=Buffer.from(await nodeResponse.arrayBuffer());if(createHash('sha256').update(bytes).digest('hex')!==expected)throw Error('Node checksum mismatch');
 const unpack=join(out,'node-'+process.platform+'-'+process.arch);await mkdir(unpack,{recursive:true});
 const archiveRoot=nodeFile.replace(/\.(?:zip|tar\.gz)$/,'');
 if(process.platform==='win32'){const zip=await JSZip.loadAsync(bytes);for(const item of ['node.exe','LICENSE'])await writeFile(join(stage,'runtime',item),await zip.file(archiveRoot+'/'+item).async('nodebuffer'));}
 else{const file=join(unpack,nodeFile);await writeFile(file,bytes);await exec('tar',['-xzf',file,'-C',unpack]);await cp(join(unpack,archiveRoot,'bin','node'),join(stage,'runtime','node'));await cp(join(unpack,archiveRoot,'LICENSE'),join(stage,'runtime','LICENSE'));await chmod(join(stage,'runtime','node'),0o755);}
 await rm(unpack,{recursive:true,force:true});
 await exec(process.execPath,[join(stage,'node_modules','playwright','cli.js'),'install','chromium'],{cwd:stage,env:{...process.env,PLAYWRIGHT_BROWSERS_PATH:join(stage,'browsers')},maxBuffer:10_000_000});
+await rm(join(stage,'browsers','.links'),{recursive:true,force:true});
+const smoke=await exec(process.execPath,[join(root,'scripts','package-smoke.mjs'),stage],{maxBuffer:10_000_000});console.log(smoke.stdout.trim());
 const config={command:process.platform==='win32'?'./runtime/node.exe':'./runtime/node',args:['./scripts/launch.mjs','mcp'],cwd:'.'};
 await writeFile(join(stage,'.mcp.json'),JSON.stringify({mcpServers:{[p.name]:config}},null,2));
 const manifest={manifest_version:'0.3',name:p.name,version:p.version,description:p.description,author:{name:'Mohammed Osman'},license:'MIT',server:{type:'binary',entry_point:'runtime/'+(process.platform==='win32'?'node.exe':'node'),mcp_config:{command:'${__dirname}/runtime/'+(process.platform==='win32'?'node.exe':'node'),args:['${__dirname}/scripts/launch.mjs','mcp']}},tools_generated:true,compatibility:{platforms:[process.platform]},privacy_policies:['https://www.linkedin.com/legal/privacy-policy','https://github.com/Mohammed-Moniem/professional-publisher-community/blob/main/SECURITY.md']};
