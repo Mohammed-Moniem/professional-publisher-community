@@ -19,27 +19,119 @@ This is an early community release. Publishing uses LinkedIn’s official APIs a
 
 ![Synthetic six-slide example](assets/slide-preview.png)
 
-## Start
+## Set it up with Codex
 
-See **[SETUP.md](SETUP.md)** for client installation, developer-app setup, and first use.
+**You do not need to know MCP or configure everything by hand.** Clone this repository, open its folder in Codex, and ask Codex to run the setup. You will use a browser for LinkedIn developer-app setup and authorization; everyday drafting and publishing happen in your AI client.
 
-From source, install Node.js 24 and Git, then:
+### 1. Clone and open the folder
+
+Install Git and a Codex client that can work with local files and run commands. Clone into a directory you intend to keep:
 
 ```sh
 git clone https://github.com/Mohammed-Moniem/professional-publisher-community.git
 cd professional-publisher-community
+```
+
+Open **that folder** as a project in Codex desktop, or run `codex` from that directory if you use the CLI. The plugin's generated configuration points to this folder, so moving or deleting it later requires setup again.
+
+### 2. Paste this into Codex
+
+```text
+Set up Professional Publisher Community from this repository for me.
+Read AGENTS.md, README.md, SETUP.md, and docs/ONBOARDING.md first.
+
+Check my OS, Node.js 24+, npm, Git, and available Codex installation.
+Install the project dependencies, build it, prepare Chromium, generate the
+local client configuration, and install the Codex plugin. Preserve other
+plugins and existing account data. If this plugin is already installed,
+check its source before changing anything or adding a duplicate server.
+
+Verify the runtime and tool discovery, then explain when I need to start
+a new Codex task. Guide me through connecting my personal LinkedIn profile,
+one step at a time. Let me enter app credentials only in the local setup
+form, never in chat. Explain any LinkedIn approval that is still required.
+
+Do not publish, upload media, import my post history, or enable scheduling
+during setup. Finish with a clear report of what works and what still
+needs my action, then help me create a local draft for review.
+```
+
+Codex handles the local commands. You handle LinkedIn login, developer-app details, consent, and any organization verification. Missing permissions or app approval cannot be fixed by installing the plugin.
+
+### 3. Follow the checkpoints
+
+```mermaid
+flowchart LR
+    A[Clone and open in Codex] --> B[Codex installs and verifies]
+    B --> C[Start a new Codex task]
+    C --> D[Open private local setup form]
+    D --> E[You authorize on LinkedIn]
+    E --> F[Check identity and permissions]
+    F --> G[Create a local draft]
+    G --> H[Review before any publication]
+```
+
+| Checkpoint | What you should see | What it means |
+|---|---|---|
+| Local runtime | Build succeeds; doctor reports Node and renderer readiness | The software can run. Your LinkedIn account may still be disconnected. |
+| Plugin loaded | The new task can call `get_workflow` and `check_capabilities` | Codex can reach the tools. Version 0.1.0 exposes 32 tools. |
+| Account connected | Your selected identity and granted permissions are listed | OAuth worked. This does not prove every posting format has been tested. |
+| First draft | Exact caption, destination, attachments and a review digest | Content is saved locally; nothing has been published. |
+
+After installation, start a **new task in the same project** and say:
+
+```text
+Use Professional Publisher Community. Read its workflow and check my
+connection. If disconnected, guide me through personal-profile setup.
+Do not publish anything.
+```
+
+### What setup looks like
+
+This is a **fictional wireframe**, not a screenshot of LinkedIn, Codex, or a user's environment. It illustrates the local form; actual browser layout may differ.
+
+```text
+┌─ LOCAL SETUP · ILLUSTRATION ONLY ─────────────────────┐
+│ Connect your LinkedIn profile                         │
+│                                                      │
+│ 1. Create your own LinkedIn developer app.             │
+│ 2. Enable the requested products.                     │
+│ 3. Register the callback shown on this form.           │
+│                                                      │
+│ Client ID       [ Enter directly in this local form ] │
+│ Client secret   [ Enter directly in this local form ] │
+│                                                      │
+│ Requested: openid · profile · w_member_social          │
+│              [ Connect through LinkedIn ]             │
+│                                                      │
+│ Nothing is posted during setup.                       │
+└──────────────────────────────────────────────────────┘
+```
+
+The personal app needs **Share on LinkedIn** for publishing and **Sign In with LinkedIn using OpenID Connect** for profile identification. See LinkedIn's official [publishing setup](https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/share-on-linkedin) and [sign-in setup](https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2). Enter your own app credentials only in the generated local form. Do not share its private session URL.
+
+**Continue with the [step-by-step walkthrough and fictional examples](docs/ONBOARDING.md)** for developer-app setup, expected results, a first draft, optional voice learning, and common setup problems. [SETUP.md](SETUP.md) has the exact installation commands for Codex and Claude.
+
+<details>
+<summary>Prefer to run the local commands yourself?</summary>
+
+From the cloned repository directory, with Node.js 24+ installed:
+
+```sh
 npm ci --ignore-scripts
 npm run build
 npx playwright install chromium
 node scripts/install.mjs
 npm run doctor
+codex plugin marketplace add .
+codex plugin add professional-publisher-community@professional-publisher-community
 ```
 
-Linux rendering also needs Chromium system libraries (`npx playwright install --with-deps chromium`). Video validation needs `ffprobe` from a current FFmpeg installation on PATH. Linux credentials require an unlocked desktop Secret Service; plaintext fallback is deliberately unavailable.
+Start a new Codex task afterward. On Linux, use `npx playwright install --with-deps chromium` to install required system libraries. Linux credentials also require an unlocked desktop Secret Service. Video validation needs `ffprobe` from a current FFmpeg installation on PATH; it is not needed for a first text draft.
 
-Try: “Read the publisher workflow. Connect my LinkedIn profile, then help me set up my writing voice.”
+The installer writes machine-specific paths into `.mcp.json` and creates ignored `client-config/` files. These are local setup outputs, not files to include in a public contribution. See the [contributor privacy checklist](docs/ONBOARDING.md#contributing-setup-examples).
 
-Then: “Turn this idea into a six-slide post. Show every slide and the final caption before publishing.”
+</details>
 
 ## Clients and platforms
 

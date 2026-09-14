@@ -1,5 +1,7 @@
 # Installation and first use
 
+New here? Start with the [copy-and-paste Codex setup prompt](README.md#set-it-up-with-codex) and [illustrated onboarding walkthrough](docs/ONBOARDING.md). This page is the command reference.
+
 ## 1. Install the runtime
 
 Use the source commands in README, or extract the release archive matching your OS and CPU into a stable user-owned directory. Do not run an extracted archive from a temporary download preview. Verify its SHA-256 against the release checksum.
