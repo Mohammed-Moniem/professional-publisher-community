@@ -1,0 +1,48 @@
+name: Publish verified artifacts
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Verify and package run ID from main
+        required: true
+        type: string
+      tag:
+        description: Existing draft release tag
+        required: true
+        default: v0.1.0
+        type: string
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RUN_ID: ${{ inputs.run_id }}
+      RELEASE_TAG: ${{ inputs.tag }}
+    steps:
+      - name: Verify successful main-branch build
+        shell: bash
+        run: |
+          gh run view "$RUN_ID" --json conclusion,event,headBranch,headSha,workflowName > run.json
+          node -e 'const r=require("./run.json"); if(r.conclusion!=="success" || r.event!=="push" || r.headBranch!=="main" || r.workflowName!=="Verify and package") throw Error("Only successful verified main builds can be released")'
+          gh release view "$RELEASE_TAG" --json isDraft > release.json
+          node -e 'if(!require("./release.json").isDraft) throw Error("This workflow only publishes draft releases")'
+      - name: Download verified artifacts
+        run: gh run download "$RUN_ID" --dir artifacts
+      - name: Verify checksums and upload
+        shell: bash
+        run: |
+          while IFS= read -r -d '' checksum; do
+            (cd "$(dirname "$checksum")" && sha256sum -c "$(basename "$checksum")")
+          done < <(find artifacts -name '*.sha256' -print0)
+          while IFS= read -r -d '' asset; do
+            gh release upload "$RELEASE_TAG" "$asset" --clobber
+          done < <(find artifacts -type f -print0)
+      - name: Publish community preview
+        shell: bash
+        run: |
+          sha=$(node -p 'require("./run.json").headSha')
+          gh release edit "$RELEASE_TAG" --target "$sha" --draft=false --prerelease
