@@ -1,0 +1,13 @@
+node_modules/
+dist/
+bin/keychain-helper
+*.log
+.DS_Store
+release/
+client-config/
+.env*
+*.sqlite*
+*.pem
+*.key
+playwright-report/
+test-results/

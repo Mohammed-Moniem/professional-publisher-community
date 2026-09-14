@@ -1,0 +1,24 @@
+{
+  "name": "professional-publisher-community",
+  "version": "0.1.0",
+  "description": "Write in your voice, create slides, and publish reviewed LinkedIn posts locally.",
+  "author": {
+    "name": "Mohammed Osman"
+  },
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Professional Publisher Community",
+    "shortDescription": "Your voice, slides, and LinkedIn publishing.",
+    "category": "Productivity",
+    "defaultPrompt": [
+      "Help me create a LinkedIn post in my writing style."
+    ],
+    "developerName": "Mohammed Osman",
+    "longDescription": "Create posts in your own voice, render editable slides, and publish or schedule explicitly reviewed drafts through LinkedIn official APIs.",
+    "capabilities": [
+      "Write"
+    ]
+  },
+  "license": "MIT"
+}

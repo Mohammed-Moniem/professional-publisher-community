@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "professional-publisher-community": {
+      "cwd": ".",
+      "command": "node",
+      "args": [
+        "./scripts/launch.mjs",
+        "mcp"
+      ]
+    }
+  }
+}

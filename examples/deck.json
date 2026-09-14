@@ -1,0 +1,14 @@
+{
+  "title": "Start with one useful thing",
+  "identity": "urn:li:person:synthetic",
+  "theme": "technical",
+  "aspect": "portrait",
+  "slides": [
+    {"layout":"cover","title":"Start with one useful thing.","body":"A small guide to building a better first version."},
+    {"layout":"explanation","title":"Choose a real problem.","body":"Write down who needs help, what they are trying to do, and where they get stuck."},
+    {"layout":"process","title":"Make the first step work.","body":"Pick one input.\nProduce one useful result.\nTest it with someone who needs it."},
+    {"layout":"comparison","title":"Compare the result.","body":"Before: a repeated manual task.\n\nAfter: a simpler way to finish it.\n\nDescribe what changed without inventing numbers."},
+    {"layout":"quote","title":"Let evidence change the plan.","body":"A useful test tells you something you did not already know."},
+    {"layout":"closing","title":"What would you build first?","body":"Choose the smallest useful result. Start there."}
+  ]
+}

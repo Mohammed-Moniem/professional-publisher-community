@@ -1,0 +1,41 @@
+{
+  "name": "professional-publisher-community",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && node --test dist/tests/*.test.js",
+    "check": "tsc --noEmit",
+    "start": "node dist/src/server.js",
+    "format": "prettier --write src tests",
+    "setup:personal": "node dist/src/setup-cli.js personal",
+    "setup:company": "node dist/src/setup-cli.js company",
+    "doctor": "node dist/src/cli.js doctor",
+    "dashboard": "node dist/src/cli.js dashboard",
+    "worker": "node dist/src/cli.js worker",
+    "release:pack": "node scripts/package-release.mjs"
+  },
+  "dependencies": {
+    "@fontsource/noto-sans": "5.3.0",
+    "@fontsource/noto-sans-arabic": "5.2.8",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@napi-rs/keyring": "2.1.0",
+    "csv-parse": "7.0.2",
+    "jszip": "3.10.1",
+    "pdf-lib": "^1.17.1",
+    "playwright": "1.63.0",
+    "sharp": "^0.35.4",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "prettier": "^3.9.6",
+    "typescript": "^5.9.0"
+  },
+  "license": "MIT",
+  "description": "Local LinkedIn publishing, personal voice, slides and scheduling for Codex and Claude"
+}

@@ -1,0 +1,35 @@
+name: Verify and package
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - name: FFmpeg for test fixtures and video validation
+        uses: FedericoCarboni/setup-ffmpeg@v3
+      - run: npm audit --audit-level=low
+      - run: npm test
+      - run: node scripts/public-check.mjs
+      - run: npm run release:pack
+      - uses: actions/upload-artifact@v4
+        with:
+          name: publisher-${{ runner.os }}-${{ runner.arch }}
+          path: |
+            release/*.tar.gz
+            release/*.mcpb
+            release/*.sha256
+          retention-days: 14
