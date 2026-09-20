@@ -30,6 +30,7 @@ export class LinkedIn {
         "RECONNECT_REQUIRED",
         "Reconnect this account to restore its access token.",
       );
+    await this.store.connection(connectionId);
     beforeSubmit?.();
     let response: Response;
     try {

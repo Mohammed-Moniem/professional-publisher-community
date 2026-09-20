@@ -1,12 +1,16 @@
 {
   "name": "professional-publisher-community",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "engines": {
     "node": ">=24"
   },
   "scripts": {
+    "setup": "node scripts/setup.mjs setup",
+    "upgrade": "node scripts/setup.mjs upgrade",
+    "rollback": "node scripts/setup.mjs rollback",
+    "uninstall:plugin": "node scripts/setup.mjs uninstall",
     "build": "tsc",
     "test": "npm run build && node --test dist/tests/*.test.js",
     "check": "tsc --noEmit",

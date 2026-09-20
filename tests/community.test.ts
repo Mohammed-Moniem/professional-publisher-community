@@ -233,7 +233,21 @@ test("upload delay cannot publish after the approved minute", async (t) => {
 });
 test("dashboard requires private session, same-origin mutation and rejects traversal", async (t) => {
   const f = await fixture(t);
-  const dash = new Dashboard(f.store, f.workspace, f.decks, {} as any);
+  const dash = new Dashboard(
+    f.store,
+    f.workspace,
+    f.decks,
+    new Scheduler(
+      f.store,
+      new Publisher(
+        f.store,
+        new LinkedIn(f.store, {
+          get: async () => undefined,
+          set: async () => {},
+        }),
+      ),
+    ),
+  );
   t.after(() => dash.close());
   const { url } = await dash.start();
   const base = new URL(url).origin;
@@ -325,6 +339,11 @@ test("real deck exports PDF, editable PPTX, PNGs, Unicode and immutable revision
   await assert.rejects(f.decks.render(overflow.id), { code: "TEXT_OVERFLOW" });
 });
 
-test('dashboard embedded script is syntactically valid JavaScript',async()=>{
- const {dashboardHTML}=await import('../src/dashboard-ui.js');const {Script}=await import('node:vm');const script=dashboardHTML('synthetic-token').match(/<script>([\s\S]*?)<\/script>/)![1];assert.doesNotThrow(()=>new Script(script));
+test("dashboard embedded script is syntactically valid JavaScript", async () => {
+  const { dashboardHTML } = await import("../src/dashboard-ui.js");
+  const { Script } = await import("node:vm");
+  const script = dashboardHTML("synthetic-token").match(
+    /<script>([\s\S]*?)<\/script>/,
+  )![1];
+  assert.doesNotThrow(() => new Script(script));
 });

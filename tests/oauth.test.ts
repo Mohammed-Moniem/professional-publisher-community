@@ -14,6 +14,9 @@ class MemoryVault implements Vault {
   async set(id: string, v: Credentials) {
     this.values.set(id, v);
   }
+  async delete(id: string) {
+    this.values.delete(id);
+  }
 }
 const port = 53683,
   base = `http://127.0.0.1:${port}`;
@@ -45,6 +48,33 @@ async function submit(start: any, origin = base) {
     redirect: "manual",
   });
 }
+test("disconnect tombstone blocks an in-flight OAuth callback from restoring access", async (t) => {
+  const f = await setup(t, async (u) => {
+    if (String(u).endsWith("accessToken"))
+      return Response.json({ access_token: "synthetic", expires_in: 3600 });
+    if (String(u).endsWith("introspectToken"))
+      return Response.json({
+        active: true,
+        scope: "openid,profile,w_member_social",
+        expires_at: Date.now() / 1000 + 3600,
+      });
+    await f.store.write("disconnections", "test", { at: Date.now() });
+    return Response.json({ sub: "synthetic", name: "Synthetic" });
+  });
+  const redirect = await submit(f.start),
+    auth = new URL(redirect.headers.get("location")!);
+  const callback = await fetch(
+    base +
+      "/callback?" +
+      new URLSearchParams({
+        state: auth.searchParams.get("state")!,
+        code: "fixture",
+      }),
+  );
+  assert.equal(callback.status, 400);
+  assert.equal(await f.store.read("connections", "test"), undefined);
+  assert.equal(await f.vault.get("test"), undefined);
+});
 test("OAuth setup validates origin/state, introspects scopes and stores secrets only in vault", async (t) => {
   let calls = 0;
   const f = await setup(t, async (u, i) => {

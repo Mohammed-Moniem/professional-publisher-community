@@ -44,6 +44,7 @@ export class OAuth {
     completedName?: string;
     reuseCredentials?: boolean;
     readHistory: boolean;
+    createdAt: number;
   };
   constructor(
     private store: Store,
@@ -63,6 +64,7 @@ export class OAuth {
     const reuseCredentials =
       existing?.mode === mode && !!(await this.vault.get(id))?.clientSecret;
     this.pending = {
+      createdAt: Date.now(),
       reuseCredentials,
       readHistory:
         readHistory || !!existing?.scopes?.includes("r_member_social"),
@@ -347,14 +349,23 @@ export class OAuth {
             : Infinity,
         ),
       };
-      await this.vault.set(p.id, {
-        ...app,
-        accessToken: token.access_token,
-        ...(refreshExpiresAt
-          ? { refreshToken: token.refresh_token, refreshExpiresAt }
-          : {}),
+      await this.store.lock("renew-" + p.id, async () => {
+        const disconnected = await this.store.read<any>("disconnections", p.id);
+        if (disconnected?.at >= p.createdAt)
+          throw new Fault(
+            "CONNECTION_CANCELLED",
+            "This connection was disconnected. Start a new connection.",
+          );
+        await this.vault.set(p.id, {
+          ...app,
+          accessToken: token.access_token,
+          ...(refreshExpiresAt
+            ? { refreshToken: token.refresh_token, refreshExpiresAt }
+            : {}),
+        });
+        await this.store.write("connections", p.id, connection);
+        if (this.vault.delete) await this.vault.delete("pending-" + p.id);
       });
-      await this.store.write("connections", p.id, connection);
       p.completedName = name;
       // Keep authorization codes out of the final visible URL and subsequent
       // browser snapshots. The code has already been exchanged server-side.

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Store } from "./store.js";
 import { Publisher } from "./publisher.js";
 import { Fault, publicError } from "./model.js";
+import { Notifications } from "./notifications.js";
 export const scheduleSchema = z.object({
   draftId: z.string().uuid(),
   reviewDigest: z.string().regex(/^[a-f0-9]{64}$/),
@@ -30,9 +31,57 @@ export class Scheduler {
     public store: Store,
     public publisher: Publisher,
     public now = () => Date.now(),
+    public notifications = new Notifications(store),
   ) {}
+  async reschedule(id: string, raw: z.infer<typeof scheduleSchema>) {
+    const input = scheduleSchema.parse(raw);
+    // The common validator performs all time-zone and exact-draft checks.
+    const dueAt = await this.validate(input);
+    return this.store.lock("schedule-" + id, async () => {
+      const job = await this.store.read<Job>("schedules", id);
+      if (!job || job.state !== "scheduled" || job.draftId !== input.draftId)
+        throw new Fault(
+          "CANNOT_RESCHEDULE",
+          "Only a pending schedule for the same reviewed draft can be moved.",
+        );
+      const next = { ...job, ...input, dueAt, rescheduledAt: this.now() };
+      await this.store.write("schedules", id, next);
+      return next;
+    });
+  }
   async schedule(raw: z.infer<typeof scheduleSchema>) {
     const input = scheduleSchema.parse(raw);
+    const dueAt = await this.validate(input);
+    const d = await this.store.draft(input.draftId);
+    return this.store.lock("schedule-draft-" + d.id, async () => {
+      const existing = (await this.store.list<Job>("schedules")).find(
+        (j) =>
+          j.draftId === d.id &&
+          ["scheduled", "running", "uncertain"].includes(j.state),
+      );
+      if (existing) {
+        if (
+          existing.dueAt === dueAt &&
+          existing.reviewDigest === input.reviewDigest
+        )
+          return existing;
+        throw new Fault(
+          "ALREADY_SCHEDULED",
+          "Cancel or explicitly reschedule the existing job.",
+        );
+      }
+      const job: Job = {
+        ...input,
+        id: randomUUID(),
+        dueAt,
+        state: "scheduled",
+        createdAt: this.now(),
+      };
+      await this.store.write("schedules", job.id, job);
+      return job;
+    });
+  }
+  private async validate(input: z.infer<typeof scheduleSchema>) {
     try {
       new Intl.DateTimeFormat("en", { timeZone: input.timeZone }).format();
     } catch {
@@ -72,33 +121,7 @@ export class Scheduler {
         "UNSAFE_DRAFT",
         "Published or uncertain drafts cannot be scheduled.",
       );
-    return this.store.lock("schedule-draft-" + d.id, async () => {
-      const existing = (await this.store.list<Job>("schedules")).find(
-        (j) =>
-          j.draftId === d.id &&
-          ["scheduled", "running", "uncertain"].includes(j.state),
-      );
-      if (existing) {
-        if (
-          existing.dueAt === dueAt &&
-          existing.reviewDigest === input.reviewDigest
-        )
-          return existing;
-        throw new Fault(
-          "ALREADY_SCHEDULED",
-          "Cancel the existing schedule before choosing another time.",
-        );
-      }
-      const job: Job = {
-        ...input,
-        id: randomUUID(),
-        dueAt,
-        state: "scheduled",
-        createdAt: this.now(),
-      };
-      await this.store.write("schedules", job.id, job);
-      return job;
-    });
+    return dueAt;
   }
   async cancel(id: string) {
     return this.store.lock("schedule-" + id, async () => {
@@ -190,6 +213,7 @@ export class Scheduler {
           },
         );
         outcomes.push(outcome);
+        await this.notifications.deliver(snapshot.id);
       } catch (e) {
         if (!(e instanceof Fault && e.code === "BUSY")) throw e;
       }

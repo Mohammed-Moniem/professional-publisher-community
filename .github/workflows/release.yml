@@ -9,7 +9,7 @@ on:
       tag:
         description: Existing draft release tag
         required: true
-        default: v0.1.0
+        default: v0.2.0
         type: string
 permissions:
   contents: write
@@ -38,6 +38,9 @@ jobs:
           while IFS= read -r -d '' checksum; do
             (cd "$(dirname "$checksum")" && sha256sum -c "$(basename "$checksum")")
           done < <(find artifacts -name '*.sha256' -print0)
+          while IFS= read -r -d '' artifact; do
+            gh attestation verify "$artifact" --repo "$GH_REPO" --signer-workflow "$GH_REPO/.github/workflows/ci.yml"
+          done < <(find artifacts -type f \( -name '*.tar.gz' -o -name '*.mcpb' \) -print0)
           while IFS= read -r -d '' asset; do
             gh release upload "$RELEASE_TAG" "$asset" --clobber
           done < <(find artifacts -type f -print0)

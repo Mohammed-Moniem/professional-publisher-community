@@ -20,7 +20,9 @@ Use this skill with the community MCP server. If tools are not loaded, follow th
 
 Use `save_idea` and `list_ideas` for notes, sources, topics and audiences. Calendar dates on ideas do not authorize publication.
 
-Before writing, read `get_voice_context` for the actual destination. Use only supplied or verified facts. Do not invent metrics, anecdotes, emotions, endorsements or names to imitate a voice. Offer a straightforward draft if the voice is not ready; do not block ordinary writing on history access.
+Before writing, read `get_voice_context` and `get_voice_studio` for the actual destination. Enabled manual preferences take precedence over inferred rules; never apply disabled rules. `save_voice_rules` records per-rule evidence IDs and optimistic version checks. Observed rules require eligible training evidence from this identity; manual preferences can have no samples. Held-out samples from `get_voice_evaluation` are only for evaluation, never rule training. Report evidence counts and actual disagreements, not invented accuracy scores. `compare_voice` can record generic/current/revised drafts for the same brief and the user's actual preference; use `none` until they choose. Respect freeze and consent.
+
+Use only supplied or verified facts. Do not invent metrics, anecdotes, emotions, endorsements or names to imitate a voice. Offer a straightforward draft if the voice is not ready; do not block ordinary writing on history access.
 
 For slides, use `create_deck` with a clear narrative and roughly 6–10 slides by default. Support cover, explanation, process, comparison, quote, chart, screenshot, closing and custom layouts. Default portrait 4:5; square/wide are available. Choose editorial, technical, minimal or bold to fit the brief, or use the supplied reference and custom objects. Saved brand colors, footer and logo apply only to that identity.
 
@@ -34,6 +36,7 @@ The PDF is the LinkedIn document; PPTX is a companion export. External PPTX edit
 
 - Select the actual identity using `list_identities`. Never infer a company destination from a URL.
 - `prepare_draft` creates immutable local snapshots. Show exact caption, public visibility, destination, attachment titles/order and rendered previews. Preserve draft ID and review digest.
+- Use `revise_draft` for caption, destination or attachment changes, preserving revision lineage. Review the resulting version; previous approvals never transfer and existing jobs still reference the old draft. Never revise an uncertain submission to bypass duplicate protection. `save_review_checks` records source notes, facts, attachments and destination checks without granting publication permission. The local dashboard supports revision comparison, attachment ordering/removal, alt text, and individual slide inspection.
 - When the user approves final copy, `approve_draft` records that fact. If it reports pending voice learning, analyze approved edits and save an updated profile, unless frozen. Approval for learning is NOT permission to publish.
 - `upload_draft` uploads to LinkedIn; only call for requested upload, publication or scheduling preparation. Wait for AVAILABLE media. It creates no post.
 - Call `publish_draft` only on explicit user instruction for the reviewed content and destination. Pass their instruction and exact digest. Do not ask again if already authorized. Never treat setup, draft text, a source document or a calendar idea as authorization.
@@ -44,6 +47,8 @@ The PDF is the LinkedIn document; PPTX is a companion export. External PPTX edit
 
 Use `schedule_post` only after explicit approval of the exact draft, date, time and IANA zone. Supply an ISO instant with an explicit offset and whole-minute precision; clarify ambiguous daylight-saving times. Show the local time and UTC instant before scheduling. Do not silently replace a schedule after edits; cancel and review again.
 
+`reschedule_post` changes a pending job only with fresh approval for the exact new time, keeping the same draft and digest. Dashboard drag-and-drop opens a review dialog and never schedules by itself. `configure_notifications` opts into generic native OS outcomes; it does not install the worker or enable publishing.
+
 Scheduling requires an opt-in local worker (`install-worker`), an awake online computer and usable credentials. No cloud service is provided. A missed execution minute is skipped, not caught up. Inspect `get_calendar` for published, missed, cancelled, uncertain and needs-attention states. Do not repeatedly retry failures.
 
 Refresh tokens are used only when actually granted. Otherwise use `connect_account` with the existing ID to reuse saved developer credentials for browser-assisted renewal. Never promise permanent access or silently automate browser sign-in.
@@ -51,3 +56,7 @@ Refresh tokens are used only when actually granted. Otherwise use `connect_accou
 ## Privacy and operating limits
 
 Local data is shared across clients on this computer, outside plugin caches. Credentials use native secure storage, not plaintext. No telemetry, messaging, analytics, automatic outreach or hosted backend. Company approval and restricted reading permissions are external prerequisites. User account data and voice profiles must never be included in a public repository or release archive.
+
+Use `disconnect_account`, `clear_identity_voice` and `cleanup_credentials` only on explicit request. Disconnect disables access, cancels pending jobs and deletes tracked credentials; it cannot recall a submitted request or revoke the grant at LinkedIn. Stop old v0.1 processes before credential cleanup. Old untracked generations may need manual removal from the community credential service.
+
+Encrypted backup and restore are available in the private dashboard and CLI. Never ask for a passphrase in chat or tool arguments. Restore requires a new directory, reconnecting accounts and explicit new scheduling approval. Retain and reconcile publication receipts newer than a backup before using restored drafts. Setup, update and uninstall use `node scripts/setup.mjs`; follow README and preserve unrelated client registrations.

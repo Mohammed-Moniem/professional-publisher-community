@@ -7,10 +7,10 @@ const stage=resolve(process.argv[2]);const root=await mkdtemp(join(tmpdir(),'pub
 const client=new Client({name:'package-smoke',version:'1.0.0'});
 try{
  await client.connect(new StdioClientTransport({command:join(stage,'runtime',process.platform==='win32'?'node.exe':'node'),args:[join(stage,'scripts','launch.mjs'),'mcp'],env:{...process.env,PUBLISHER_COMMUNITY_HOME:root},stderr:'pipe'}));
- const list=await client.listTools();if(list.tools.length!==32)throw Error('Unexpected tool count');
+ const list=await client.listTools();if(list.tools.length!==43)throw Error('Unexpected tool count');
  async function call(name,args={}){const r=await client.callTool({name,arguments:args});if(r.isError)throw Error(JSON.stringify(r));return JSON.parse(r.content[0].text);}
  await call('get_workflow');
  const d=await call('create_deck',{deck:{identity:'urn:li:person:synthetic',title:'Packaged rendering',slides:[{layout:'cover',title:'A portable publishing tool.',body:'Synthetic package verification.'}]}});
  const output=await call('render_deck',{deckId:d.id});for(const path of [output.pdf,output.pptx,...output.slides])await access(path);
- console.log('Packaged official Node: 32 MCP tools, workflow and real PDF/PPTX/PNG rendering passed. No credentials or LinkedIn requests.');
+ console.log('Packaged official Node: 43 MCP tools, workflow and real PDF/PPTX/PNG rendering passed. No credentials or LinkedIn requests.');
 }finally{await client.close();await rm(root,{recursive:true,force:true});}

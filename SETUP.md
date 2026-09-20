@@ -2,6 +2,8 @@
 
 New here? Start with the [copy-and-paste Codex setup prompt](README.md#set-it-up-with-codex) and [illustrated onboarding walkthrough](docs/ONBOARDING.md). This page is the command reference.
 
+From the repository root, `node scripts/setup.mjs setup` guides client selection and software installation. See [v0.2 setup, upgrade, uninstall, review and encrypted backup](docs/V0.2.md). The manual steps below remain available for troubleshooting and custom client configurations.
+
 ## 1. Install the runtime
 
 Use the source commands in README, or extract the release archive matching your OS and CPU into a stable user-owned directory. Do not run an extracted archive from a temporary download preview. Verify its SHA-256 against the release checksum.

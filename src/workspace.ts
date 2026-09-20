@@ -323,7 +323,19 @@ export class Workspace {
     return this.store.lock("voice-" + hash(identity), async () => {
       const key = hash(identity),
         v = await this.store.read<any>("voices", key);
+      const studio = await this.store.read<any>("voice_studio", key);
       if (action === "reset") {
+        await this.store.remove("voice_studio", key);
+        for (const group of ["studio_versions", "voice_comparisons"])
+          for (const item of await this.store.list<any>(group)) {
+            if (item.identity === identity)
+              await this.store.remove(
+                group,
+                group === "studio_versions"
+                  ? hash([identity, item.version])
+                  : item.id,
+              );
+          }
         await this.store.remove("voices", key);
         for (const s of await this.store.list<Sample>("samples"))
           if (s.identity === identity) await this.store.remove("samples", s.id);
@@ -336,12 +348,24 @@ export class Workspace {
         await this.consent(identity, false);
         return { reset: true };
       }
-      if (!v) throw new Fault("NO_VOICE", "No saved voice profile.");
+      if (!v && !studio) throw new Fault("NO_VOICE", "No saved voice profile.");
       if (action !== "export") {
-        v.frozen = action === "freeze";
-        await this.store.write("voices", key, v);
+        if (v) {
+          v.frozen = action === "freeze";
+          await this.store.write("voices", key, v);
+        }
+        if (studio)
+          await this.store.write("voice_studio", key, {
+            ...studio,
+            frozen: action === "freeze",
+          });
       }
-      return v;
+      return (
+        v || {
+          ...studio,
+          frozen: action === "export" ? studio.frozen : action === "freeze",
+        }
+      );
     });
   }
   async approveDraft(id: string, digest: string, authorization: string) {
@@ -361,7 +385,8 @@ export class Workspace {
     });
     const pref = await this.store.read<any>("preferences", hash(d.author));
     const voice = await this.store.read<any>("voices", hash(d.author));
-    if (pref?.learning && !voice?.frozen && d.text.trim()) {
+    const studio = await this.store.read<any>("voice_studio", hash(d.author));
+    if (pref?.learning && !voice?.frozen && !studio?.frozen && d.text.trim()) {
       await this.ingest(d.author, [
         {
           text: d.text,

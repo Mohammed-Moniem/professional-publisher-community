@@ -12,7 +12,7 @@ const p=JSON.parse(await readFile(join(root,'package.json'),'utf8'));
 const out=join(root,'release'),name=`${p.name}-${p.version}-${process.platform}-${process.arch}`,stage=join(out,name);
 await rm(stage,{recursive:true,force:true});await mkdir(stage,{recursive:true});
 // Explicit allowlist: no local databases, credentials, exports, caches, or private profiles.
-for(const path of ['dist/src','vendor','skills','scripts/launch.mjs','scripts/install.mjs','.codex-plugin','.claude-plugin','.agents','.mcp.json','package.json','package-lock.json','LICENSE','README.md','SETUP.md','SECURITY.md','docs','examples','assets'])await cp(join(root,path),join(stage,path),{recursive:true});
+for(const path of ['dist/src','vendor','skills','scripts/launch.mjs','scripts/install.mjs','scripts/setup.mjs','scripts/verify-release.mjs','.codex-plugin','.claude-plugin','.agents','.mcp.json','package.json','package-lock.json','LICENSE','README.md','AGENTS.md','SETUP.md','SECURITY.md','docs','examples','assets'])await cp(join(root,path),join(stage,path),{recursive:true});
 const npm=process.platform==='win32'?'npm.cmd':'npm';
 // execFile .cmd is not portable on Windows. Run npm's JS entry point with the build Node.
 const npmCli=process.env.npm_execpath;

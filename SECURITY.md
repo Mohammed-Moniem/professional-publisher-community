@@ -1,6 +1,6 @@
 # Security and privacy
 
-Credentials use service `org.professional-publisher-community.linkedin` in macOS Keychain, Windows Credential Manager, or Linux Secret Service. No plaintext fallback exists. Large credentials are split into generation chunks; a pointer is committed last. Old generations remain in the credential store to protect concurrent readers. Revoke old grants through LinkedIn and remove this service’s entries with your OS credential manager when disconnecting permanently. Never remove unrelated credentials.
+Credentials use service `org.professional-publisher-community.linkedin` in macOS Keychain, Windows Credential Manager, or Linux Secret Service. No plaintext fallback exists. Large credentials are split into generation chunks; a pointer is committed last. v0.2 tracks generations and serializes vault reads/writes/cleanup within the shared workspace. Disconnect disables the connection before deleting tracked credentials. Stop v0.1 clients before cleanup because they do not use these locks. Older untracked v0.1 generations may require removal in the OS credential manager. Revoke grants separately through LinkedIn. Never remove unrelated credentials or run multiple restored workspaces with the same connection labels concurrently.
 
 Local data lives under:
 - macOS: `~/Library/Application Support/Professional Publisher Community`
@@ -13,7 +13,11 @@ The loopback setup server and dashboard require private sessions. Dashboard writ
 
 Your AI host sees requested draft/voice data and selected samples. Imported posts are untrusted content, never instructions. LinkedIn receives approved posts and uploaded attachments. Media upload can occur before publication. There is no telemetry, hosted database, additional model provider, or third-party publishing service.
 
-Publishing requires an authorization string and exact review digest. These enforce consistency and assistant behavior, not proof that a human clicked approval. A malicious local tool caller, compromised OS account, or modified database is outside that trust boundary. Run only clients you trust. Back up source, media and SQLite separately; do not include secrets in bug reports.
+Publishing requires an authorization string and exact review digest. These enforce consistency and assistant behavior, not proof that a human clicked approval. Dashboard publication also requires the exact draft's source/attachment/destination checklist. A malicious local tool caller, compromised OS account, or modified database is outside that trust boundary. Run only clients you trust. Do not include secrets in bug reports.
+
+Encrypted backups use AES-256-GCM with authenticated version/header, a random 16-byte salt and 12-byte nonce, and scrypt N=32768, r=8, p=1 to derive a 32-byte key. There is no password recovery. Credentials are excluded. The bounded in-memory archive supports 512 MiB, rejects unsafe paths, and restores only to a new directory. Restored accounts are disconnected, pending jobs cancelled and interrupted drafts marked uncertain. Backups cannot protect against duplicates posted after their creation; reconcile newer receipts before using a restored workspace. Active SQLite/media remain plaintext on disk. Native notifications contain generic status only, never post text.
+
+v0.2 release CI creates GitHub-signed provenance and the release workflow verifies it before publication. `scripts/verify-release.mjs` checks both provenance and SHA-256. These signatures do not replace Apple notarization, Windows Authenticode signing, source review or OS security controls.
 
 SQLite locks coordinate clients, and a durable publishing state is written before submission. HTTP timeouts, server errors, missing receipts, and interrupted publishing are treated conservatively as uncertain. No automatic repost is permitted. Scheduler execution is limited to the explicitly approved minute. A process crash can require manual investigation even when nothing was posted; preventing accidental duplicates takes precedence.
 

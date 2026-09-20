@@ -6,6 +6,17 @@ Write LinkedIn posts in your voice, create slide decks, and publish reviewed dra
 
 This is an early community release. Publishing uses LinkedIn’s official APIs and your own developer app. Installation does not grant API access. Company publishing and member history access may require LinkedIn approval. No live posts are created by tests.
 
+## New in v0.2
+
+- One-command guided setup for Codex and Claude Code, source upgrades/rollback, and uninstall that preserves private data.
+- Account disconnect, pending-job cancellation, credential cleanup, and voice-data removal.
+- Draft editor with immutable revision comparison, destination selection, attachment ordering/removal and alt text. A source checklist and separate learning/publishing approvals keep review explicit.
+- Voice Studio with editable rules, source evidence, manual preferences, disabled rules, held-out evaluation examples and writing comparisons.
+- Monthly calendar with drag-to-review rescheduling and opt-in native notifications.
+- Passphrase-encrypted backups containing local records and assets, plus GitHub-signed build provenance for release artifacts. Apple notarization and Windows Authenticode signing are not included.
+
+See [v0.2 usage, maintenance and recovery](docs/V0.2.md) for exact behavior and limits.
+
 ## What is included
 
 - Personal and company identities, with separate permission and format readiness.
@@ -33,6 +44,14 @@ cd professional-publisher-community
 ```
 
 Open **that folder** as a project in Codex desktop, or run `codex` from that directory if you use the CLI. The plugin's generated configuration points to this folder, so moving or deleting it later requires setup again.
+
+With Node.js 24+ installed, you can also run the guided setup directly:
+
+```sh
+node scripts/setup.mjs setup
+```
+
+For a known client: `node scripts/setup.mjs setup --client codex --yes --skip-connect` (use `claude` for Claude Code). This installs the local software and selected plugin; it does not connect an account, upload, publish, import history, or enable the scheduling worker. The wizard restores the portable source manifest after registration, so machine paths do not enter Git.
 
 ### 2. Paste this into Codex
 
@@ -74,7 +93,7 @@ flowchart LR
 | Checkpoint | What you should see | What it means |
 |---|---|---|
 | Local runtime | Build succeeds; doctor reports Node and renderer readiness | The software can run. Your LinkedIn account may still be disconnected. |
-| Plugin loaded | The new task can call `get_workflow` and `check_capabilities` | Codex can reach the tools. Version 0.1.0 exposes 32 tools. |
+| Plugin loaded | The new task can call `get_workflow` and `check_capabilities` | Codex can reach the tools. Version 0.2.0 exposes 43 tools. |
 | Account connected | Your selected identity and granted permissions are listed | OAuth worked. This does not prove every posting format has been tested. |
 | First draft | Exact caption, destination, attachments and a review digest | Content is saved locally; nothing has been published. |
 

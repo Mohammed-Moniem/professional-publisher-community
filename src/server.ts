@@ -15,7 +15,7 @@ const publisher = new Publisher(store, api);
 const oauth = new OAuth(store, vault);
 export const server = new McpServer({
   name: "professional-publisher-community",
-  version: "0.1.0",
+  version: "0.2.0",
 });
 const readOnly = {
   readOnlyHint: true,
@@ -68,7 +68,6 @@ server.registerTool(
   () =>
     result(async () => {
       await oauth.close();
-      await community.dashboard.close();
       return { cancelled: true };
     }),
 );

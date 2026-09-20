@@ -17,6 +17,42 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { chromium } from "playwright";
 import { existsSync } from "node:fs";
+import { exportBackup, restoreBackup } from "./backups.js";
+import { Accounts } from "./accounts.js";
+import { emitKeypressEvents } from "node:readline";
+async function passphrase() {
+  if (!process.stdin.isTTY)
+    throw new Fault(
+      "TERMINAL_REQUIRED",
+      "Use an interactive terminal or the private dashboard to enter a backup passphrase. Never put it in chat or command arguments.",
+    );
+  process.stdout.write("Backup passphrase (hidden): ");
+  emitKeypressEvents(process.stdin);
+  process.stdin.setRawMode(true);
+  process.stdin.resume();
+  return new Promise<string>((resolve, reject) => {
+    let value = "";
+    const done = () => {
+      process.stdin.off("keypress", keypress);
+      process.stdin.setRawMode(false);
+      process.stdin.pause();
+      process.stdout.write("\n");
+    };
+    const keypress = (text: string, key: any) => {
+      if (key.ctrl && key.name === "c") {
+        done();
+        reject(new Fault("CANCELLED", "Backup cancelled."));
+      } else if (key.name === "return") {
+        done();
+        resolve(value);
+      } else if (key.name === "backspace")
+        value = Array.from(value).slice(0, -1).join("");
+      else if (text && !key.ctrl && !key.meta && !/[\x00-\x1f\x7f]/.test(text))
+        value += text;
+    };
+    process.stdin.on("keypress", keypress);
+  });
+}
 const exec = promisify(execFile),
   store = new Store(),
   api = new LinkedIn(store, new Keychain()),
@@ -137,7 +173,7 @@ async function main() {
     console.log(
       JSON.stringify(
         {
-          version: "0.1.0",
+          version: "0.2.0",
           node: process.version,
           platform: process.platform,
           arch: process.arch,
@@ -190,10 +226,46 @@ async function main() {
         : "Worker removed. Drafts and account data retained.",
     );
   } else if (command === "backup") {
-    console.log(await store.backup());
+    await store.init();
+    console.log(
+      JSON.stringify(
+        await exportBackup(
+          store,
+          process.argv[3] ||
+            join(store.root, "backups", Date.now() + ".ppcenc"),
+          await passphrase(),
+        ),
+      ),
+    );
+  } else if (command === "restore") {
+    console.log(
+      JSON.stringify(
+        await restoreBackup(
+          process.argv[3] || "",
+          process.argv[4] || "",
+          await passphrase(),
+        ),
+      ),
+    );
+  } else if (command === "disconnect") {
+    console.log(
+      JSON.stringify(
+        await new Accounts(store, new Keychain(store)).disconnect(
+          process.argv[3] || "",
+        ),
+      ),
+    );
+  } else if (command === "notifications") {
+    if (!["on", "off"].includes(process.argv[3]))
+      throw new Fault("INVALID_INPUT", "Use notifications on|off.");
+    console.log(
+      JSON.stringify(
+        await scheduler.notifications.configure(process.argv[3] === "on"),
+      ),
+    );
   } else
     console.log(
-      "Professional Publisher Community\nCommands: mcp, connect [id] [personal|company], doctor, dashboard, tick, worker, install-worker, uninstall-worker, backup\nNo command publishes content without an approved draft/job.",
+      "Professional Publisher Community\nCommands: mcp, connect [id] [personal|company], doctor, dashboard, tick, worker, install-worker, uninstall-worker, backup [output], restore <backup> <new-directory>, disconnect <id>, notifications on|off\nBackup passphrases are entered privately. No command publishes content without an approved draft/job.",
     );
 }
 main().catch((e) => {

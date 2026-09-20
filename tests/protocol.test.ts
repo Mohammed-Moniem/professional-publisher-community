@@ -24,7 +24,7 @@ test("real stdio MCP process discovers all tools and isolates local drafting fro
   });
   await client.connect(transport);
   const list = await client.listTools();
-  assert.ok(list.tools.length >= 30);
+  assert.equal(list.tools.length, 43);
   assert.equal(
     list.tools.find((t) => t.name === "publish_draft")?.annotations
       ?.destructiveHint,

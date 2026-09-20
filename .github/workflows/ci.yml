@@ -4,6 +4,8 @@ on:
   pull_request:
 permissions:
   contents: read
+  id-token: write
+  attestations: write
 jobs:
   test:
     strategy:
@@ -29,6 +31,13 @@ jobs:
       - run: npm test
       - run: node scripts/public-check.mjs
       - run: npm run release:pack
+      - name: Sign build provenance for public main builds
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            release/*.tar.gz
+            release/*.mcpb
       - uses: actions/upload-artifact@v4
         with:
           name: publisher-${{ runner.os }}-${{ runner.arch }}

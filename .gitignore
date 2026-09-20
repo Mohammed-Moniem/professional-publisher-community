@@ -9,5 +9,6 @@ client-config/
 *.sqlite*
 *.pem
 *.key
+*.ppcenc
 playwright-report/
 test-results/
