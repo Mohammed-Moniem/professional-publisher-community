@@ -18,9 +18,13 @@ export class Review {
         "DRAFT_LOCKED",
         "Resolve this uncertain submission before creating a revision. Do not evade duplicate prevention.",
       );
+    const existingIds = new Set(
+      (await this.publisher.store.list<any>("drafts")).map((d) => d.id),
+    );
     const result = await this.publisher.prepare(draftInput.parse(raw));
     if (
       result.id !== id &&
+      !existingIds.has(result.id) &&
       !(await this.publisher.store.read("draft_revisions", result.id))
     )
       await this.publisher.store.write("draft_revisions", result.id, {

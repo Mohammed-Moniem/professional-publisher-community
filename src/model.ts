@@ -8,7 +8,13 @@ export const formats = [
   "document",
 ] as const;
 export type Format = (typeof formats)[number];
-export const connectionId = z.string().regex(/^[a-z][a-z0-9-]{0,39}$/);
+export const connectionId = z
+  .string()
+  .regex(/^[a-z][a-z0-9-]{0,39}$/)
+  .refine(
+    (id) => !id.startsWith("pending-"),
+    "The pending- prefix is reserved for temporary OAuth credentials.",
+  );
 export const authorUrn = z
   .string()
   .regex(/^urn:li:(person:[A-Za-z0-9_-]+|organization:[0-9]+)$/);

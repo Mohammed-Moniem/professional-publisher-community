@@ -15,6 +15,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { chromium } from "playwright";
 import { Store, hash } from "../src/store.js";
+import { connectionId } from "../src/model.js";
 import { Keychain, type Credentials } from "../src/keychain.js";
 import { LinkedIn } from "../src/linkedin.js";
 import { Publisher } from "../src/publisher.js";
@@ -28,6 +29,10 @@ import { exportBackup, restoreBackup } from "../src/backups.js";
 import { Dashboard } from "../src/dashboard.js";
 import { Decks } from "../src/decks.js";
 const identity = "urn:li:person:synthetic";
+test("account labels cannot collide with pending OAuth credential entries", () => {
+  assert.equal(connectionId.safeParse("pending-personal").success, false);
+  assert.equal(connectionId.safeParse("personal").success, true);
+});
 const input = {
   connectionId: "personal",
   author: identity,
@@ -106,6 +111,8 @@ test("revision preserves original, changes digest, separates learning and public
     text: "A revised synthetic draft.",
   });
   assert.notEqual(next.digest, d.digest);
+  assert.equal((await review.revise(next.id, next.digest, input)).id, d.id);
+  assert.equal(await f.store.read("draft_revisions", d.id), undefined);
   assert.equal((await f.store.draft(d.id)).text, input.text);
   await assert.rejects(
     review.check(next.id, d.digest, {
@@ -413,7 +420,14 @@ test("one-command packaged configuration setup restores portable manifest and ma
 });
 test("browser review edits an immutable draft, blocks unsaved publication, and saves manual voice preferences", async (t) => {
   const f = await fixture(t);
-  const d = await f.publisher.prepare(input);
+  const d = await f.publisher.prepare({
+    ...input,
+    link: {
+      url: "https://example.com/story",
+      title: "Synthetic article",
+      description: "Preserve this description.",
+    },
+  });
   const dashboard = new Dashboard(
     f.store,
     f.workspace,
@@ -441,6 +455,10 @@ test("browser review edits an immutable draft, blocks unsaved publication, and s
   await page.getByText("Previous version", { exact: true }).waitFor();
   assert.equal((await f.store.draft(d.id)).text, input.text);
   assert.equal((await f.store.list("drafts")).length, 2);
+  assert.equal(
+    (await f.store.list<any>("drafts"))[1].link.description,
+    "Preserve this description.",
+  );
   assert.equal(f.posts(), 0);
   await page.getByRole("button", { name: "Voice Studio", exact: true }).click();
   await page.getByLabel("Identity URN").fill(identity);
