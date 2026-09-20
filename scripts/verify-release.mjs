@@ -11,6 +11,6 @@ try {
   if (checksum.length !== 2 || checksum[1] !== basename(path) || !/^[a-f0-9]{64}$/.test(checksum[0])) throw Error('Invalid checksum file.');
   const hash = createHash('sha256'); for await (const part of createReadStream(path)) hash.update(part);
   if (hash.digest('hex') !== checksum[0]) throw Error('Checksum mismatch. Do not install this artifact.');
-  await promisify(execFile)('gh', ['attestation','verify',path,'--repo','Mohammed-Moniem/professional-publisher-community','--signer-workflow','Mohammed-Moniem/professional-publisher-community/.github/workflows/ci.yml'], { maxBuffer: 4_000_000 });
+  await promisify(execFile)('gh', ['attestation','verify',path,'--repo','Mohammed-Moniem/professional-publisher-community','--signer-workflow','Mohammed-Moniem/professional-publisher-community/.github/workflows/ci.yml','--source-ref','refs/heads/main'], { maxBuffer: 4_000_000 });
   console.log('Checksum and GitHub build provenance verified. This does not claim Apple notarization or Windows Authenticode signing.');
 } catch (e) { console.error('Verification failed: ' + e.message); process.exitCode = 1; }
